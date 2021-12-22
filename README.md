@@ -1,6 +1,8 @@
 # dependency helper
 Dependency helper for properties of python class
 
+```$ pip install deps_helper```
+
 ```python
 from deps_helper import Dependencies
 
