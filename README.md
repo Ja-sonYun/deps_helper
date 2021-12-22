@@ -19,7 +19,7 @@ class A(new_Dep):
 >>> a.first_operation() 
 Traceback (most recent call last):
 ...
-AttributeError: ("follow attributes are not assigned for => ", [number])
+AttributeError: ("follow attributes are not assigned for first_operation => ", [number])
 
 >>> a.number = 2
 >>> a.first_operation()
