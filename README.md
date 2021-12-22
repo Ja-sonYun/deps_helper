@@ -1,4 +1,7 @@
 # dependency helper
+
+[![Supported Python Versions](https://img.shields.io/pypi/pyversions/deps-helper/0.1.3)](https://pypi.org/project/rich/) [![PyPI version](https://badge.fury.io/py/deps-helper.svg)](https://badge.fury.io/py/deps-helper)
+
 Dependency helper for properties of python class
 
 ```$ pip install deps_helper```
