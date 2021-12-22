@@ -1,9 +1,14 @@
 [tool.poetry]
 name = "deps_helper"
-version = "0.1.0"
+version = "0.1.2"
 description = "dependencies helper"
-authors = ["jason"]
+authors = ["jasonyun <killa30865@gmail.com>"]
+readme = "README.md"
+keywords = ["dependecy"]
 license = "MIT"
+include = ["LICENSE"]
+homepage = "https://github.com/Ja-sonYun/deps_helper"
+repository = "https://github.com/Ja-sonYun/deps_helper"
 
 [tool.poetry.dependencies]
 python = "^3.9"

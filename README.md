@@ -1,4 +1,4 @@
-# deps_helper [WIP]
+# dependency helper
 Dependency helper for properties of python class
 
 ```python
