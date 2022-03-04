@@ -10,25 +10,27 @@ Dependency helper for properties of python class
 from deps_helper import Dependencies
 
 
-new_Dep = Dependencies.new("A")
-
-class A(new_Dep):
+class A(deps := Dependencies.new()):
     #  "_for" can be an array
-    @new_Dep.register(_for="first_operation")[int]  # support type hinting, tested in pyright
-    def number(self, value):
-        return value
+    @deps.register(_for="operation")
+    def requested_by(self, user):
+        print(f"operation requested by {user}.")
 
-    @new_Dep.guard()
-    def first_operation(self):
+        return user
+
+    @deps.guard()
+    def operation(self):
         ...
 
 
+
 >>> a = A()
->>> a.first_operation()
+>>> a.operation()
 Traceback (most recent call last):
 ...
-AttributeError: ("follow attributes are not assigned for first_operation => ", [number])
->>> a.number = 2
->>> a.first_operation()  # OK
+AttributeError: ("follow attributes are not assigned for operation => ", [requested_by])
+>>> a.requested_by = "admin"
+operation requested by admin.
+>>> a.operation()  # OK
 >>>
 ```

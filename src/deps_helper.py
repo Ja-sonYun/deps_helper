@@ -13,38 +13,56 @@ MayAssigned = Union[Type[NotAssigned], T]
 
 
 def unwrap_assigned(may_assigned: MayAssigned[T]) -> T:
-    assert may_assigned is not NotAssigned
+    assert may_assigned is not NotAssigned, f"cannot unwrap the value of {may_assigned}"
     return cast(T, may_assigned)
 
 
-class RegDependencyBase(Generic[G]):
+class __RegDependencyBase__(Generic[G]):
     __mapper = "_mapper"
 
-    def __init__(self, func: Callable[[Any, G], Optional[Any]]):
+    def __init__(self, func: Callable[[Any, G], Any]):
         self.func = func
+        print(self.func)
         self.attr_name = func.__name__
-        self.last_value: MayAssigned[G] = NotAssigned
+        #  self.last_value: MayAssigned[G] = NotAssigned
+
+        self.hash_table: dict[int, MayAssigned[G]] = {}
 
         # register new attribute name into mapper
-        getattr(self, RegDependencyBase.__mapper)(self.attr_name)
+        getattr(self, __RegDependencyBase__.__mapper)(self.attr_name)
 
-    def __get__(self, *_) -> G:
-        if self.last_value is NotAssigned:
+    def init_part_of_ins(self, instance: "Dependencies") -> int:
+        ins_id = id(instance)
+
+        if ins_id not in self.hash_table:
+            self.hash_table[ins_id] = NotAssigned
+
+        return ins_id
+
+    def __get__(self, instance: "Dependencies", *_) -> G:
+        ins_id = self.init_part_of_ins(instance)
+
+        last_value = self.hash_table[ins_id]
+
+        if last_value is NotAssigned:
             raise AttributeError(f"'{self.attr_name}' is not assigned")
 
-        return unwrap_assigned(self.last_value)
+        return unwrap_assigned(last_value)
 
     def __set__(self, instance: "Dependencies", value: G):
-        last_value = self.func(instance, value)
-        if last_value is None:
-            self.last_value = value
+        ins_id = self.init_part_of_ins(instance)
+
+        temporary_last_value = self.func(instance, value)
+
+        if temporary_last_value is None:
+            self.hash_table[ins_id] = value
         else:
-            self.last_value = last_value
+            self.hash_table[ins_id] = temporary_last_value
 
     @staticmethod
     def _append_mapper(
         mapper: dict, _for: Union[List[str], str]
-    ) -> Callable[[Type["RegDependencyBase"], str], None]:
+    ) -> Callable[[Type["__RegDependencyBase__"], str], None]:
         all_deps = [_for] if isinstance(_for, str) else _for
 
         def attr_mapper(_, attr_name: str):
@@ -59,16 +77,18 @@ class RegDependencyBase(Generic[G]):
     @staticmethod
     def _create_with_for(
         _for: Union[List[str], str], _dependency_map: dict[str, List[str]]
-    ) -> Type["RegDependencyBase"]:
+    ):
         def adder(ns: dict[str, Any]) -> None:
-            ns[RegDependencyBase.__mapper] = RegDependencyBase._append_mapper(
+            ns[__RegDependencyBase__.__mapper] = __RegDependencyBase__._append_mapper(
                 _dependency_map, _for
             )
 
-        return cast(
-            Type[RegDependencyBase],
-            new_class("RegDependency", (RegDependencyBase, Generic[G]), None, adder),
+        nc = new_class(
+            "RegDependency", (__RegDependencyBase__, Generic[G]), None, adder
         )
+        #  return nc
+
+        return cast(Type[__RegDependencyBase__], nc)
 
 
 class RegReqMeta(type):
@@ -77,7 +97,7 @@ class RegReqMeta(type):
     def __new__(cls, name, bases, dct):
         dct[RegReqMeta.key] = []
         for _, v in dct.items():
-            if isinstance(v, RegDependencyBase):
+            if isinstance(v, __RegDependencyBase__):
                 dct[RegReqMeta.key].append(v.attr_name)
 
         return super().__new__(cls, name, bases, dct)
@@ -85,7 +105,6 @@ class RegReqMeta(type):
 
 class Dependencies(metaclass=RegReqMeta):
     __dep_mapper_key__ = "__dependency_map__"
-    _register = RegDependencyBase
 
     @staticmethod
     def get_dependency_map(_=None) -> dict[str, List[str]]:
@@ -94,7 +113,7 @@ class Dependencies(metaclass=RegReqMeta):
         ...
 
     @staticmethod
-    def new(name: str) -> Type["Dependencies"]:
+    def new(name: str = "_") -> Type["Dependencies"]:
         def adder(ns: dict[str, Any]) -> None:
             ns[Dependencies.__dep_mapper_key__] = {}
 
@@ -111,7 +130,7 @@ class Dependencies(metaclass=RegReqMeta):
 
     @classmethod
     def register(cls, *, _for: Union[str, List[str]] = "*"):
-        new_dep = RegDependencyBase._create_with_for(_for, cls.get_dependency_map())
+        new_dep = __RegDependencyBase__._create_with_for(_for, cls.get_dependency_map())
         return new_dep
 
     @classmethod
@@ -167,32 +186,43 @@ class Dependencies(metaclass=RegReqMeta):
 if __name__ == "__main__":
     a_dep = Dependencies.new("A")
 
-    def raiseerr():
-        print("faisdkljaslkdjeld")
-
     class A(a_dep):
-        @a_dep.register(_for="aa")[int]
-        def a(self, value):
-            return value
+        @a_dep.register(_for="aa")
+        def a(*_):
+            ...
 
-        @a_dep.register(_for=["bb", "aa"])[int]
+        @a_dep.register(_for=["bb", "aa"])
         def b(self, value):
             return str(value)
 
         @a_dep.guard()
         def aa(self):
-            print("all good")
+            print(f"all good, {self.a}")
 
         @a_dep.guard()
         def bb(self):
-            print("all good")
-
-    def wwww(we: int):
-        print(we)
+            print(f"all good, {self.b}")
 
     w = A()
     w.a = 2
-    print(w.a)
-    #  w.b = wwww
+    w.b = 3
     w.aa()
     w.bb()
+
+    w2 = A()
+    w2.a = 3
+    w2.b = 3
+    w2.aa()
+    w2.bb()
+
+    a = w2.a
+
+    class B:
+        def __init__(self, a):
+            self.a = a
+
+        class BB:
+            def __init__(self, a):
+                print(a)
+
+    b = B.BB(a)
