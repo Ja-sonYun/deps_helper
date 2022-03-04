@@ -193,7 +193,7 @@ if __name__ == "__main__":
 
         @a_dep.register(_for=["bb", "aa"])
         def b(self, value):
-            return str(value)
+            return "asd"
 
         @a_dep.guard()
         def aa(self):
