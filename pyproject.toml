@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "deps_helper"
-version = "0.1.5"
+version = "0.1.6"
 description = "dependencies helper"
 authors = ["jasonyun <killa30865@gmail.com>"]
 readme = "README.md"
